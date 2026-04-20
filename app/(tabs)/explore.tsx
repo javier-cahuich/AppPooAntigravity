@@ -1,112 +1,341 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  StyleSheet,
+  StatusBar,
+  Animated,
+} from 'react-native';
+import { useRouter } from 'expo-router';
+import { OOP_MODULES } from '@/constants/oopModules';
+import { useProgress } from '@/hooks/useProgress';
+import ProgressBar from '@/components/ProgressBar';
 
-import { Collapsible } from '@/components/ui/collapsible';
-import { ExternalLink } from '@/components/external-link';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Fonts } from '@/constants/theme';
+export default function ProgressScreen() {
+  const router = useRouter();
+  const { completedCount, totalModules, completionPercentage, isComplete } = useProgress();
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
-export default function TabTwoScreen() {
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
+  }, []);
+
+  const getMotivationalMessage = () => {
+    if (completionPercentage === 0) return { emoji: '🚀', msg: '¡Empieza tu viaje hoy!' };
+    if (completionPercentage < 30) return { emoji: '🌱', msg: '¡Buen comienzo! Sigue así.' };
+    if (completionPercentage < 60) return { emoji: '⚡', msg: '¡Vas a mitad del camino!' };
+    if (completionPercentage < 100) return { emoji: '🔥', msg: '¡Casi lo logras! No pares.' };
+    return { emoji: '🏆', msg: '¡Eres un experto en POO!' };
+  };
+
+  const { emoji, msg } = getMotivationalMessage();
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#D0D0D0', dark: '#353636' }}
-      headerImage={
-        <IconSymbol
-          size={310}
-          color="#808080"
-          name="chevron.left.forwardslash.chevron.right"
-          style={styles.headerImage}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText
-          type="title"
-          style={{
-            fontFamily: Fonts.rounded,
-          }}>
-          Explore
-        </ThemedText>
-      </ThemedView>
-      <ThemedText>This app includes example code to help you get started.</ThemedText>
-      <Collapsible title="File-based routing">
-        <ThemedText>
-          This app has two screens:{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">app/(tabs)/explore.tsx</ThemedText>
-        </ThemedText>
-        <ThemedText>
-          The layout file in <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText>{' '}
-          sets up the tab navigator.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/router/introduction">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Android, iOS, and web support">
-        <ThemedText>
-          You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-          <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-        </ThemedText>
-      </Collapsible>
-      <Collapsible title="Images">
-        <ThemedText>
-          For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText> and{' '}
-          <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-          different screen densities
-        </ThemedText>
-        <Image
-          source={require('@/assets/images/react-logo.png')}
-          style={{ width: 100, height: 100, alignSelf: 'center' }}
-        />
-        <ExternalLink href="https://reactnative.dev/docs/images">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Light and dark mode components">
-        <ThemedText>
-          This template has light and dark mode support. The{' '}
-          <ThemedText type="defaultSemiBold">useColorScheme()</ThemedText> hook lets you inspect
-          what the user&apos;s current color scheme is, and so you can adjust UI colors accordingly.
-        </ThemedText>
-        <ExternalLink href="https://docs.expo.dev/develop/user-interface/color-themes/">
-          <ThemedText type="link">Learn more</ThemedText>
-        </ExternalLink>
-      </Collapsible>
-      <Collapsible title="Animations">
-        <ThemedText>
-          This template includes an example of an animated component. The{' '}
-          <ThemedText type="defaultSemiBold">components/HelloWave.tsx</ThemedText> component uses
-          the powerful{' '}
-          <ThemedText type="defaultSemiBold" style={{ fontFamily: Fonts.mono }}>
-            react-native-reanimated
-          </ThemedText>{' '}
-          library to create a waving hand animation.
-        </ThemedText>
-        {Platform.select({
-          ios: (
-            <ThemedText>
-              The <ThemedText type="defaultSemiBold">components/ParallaxScrollView.tsx</ThemedText>{' '}
-              component provides a parallax effect for the header image.
-            </ThemedText>
-          ),
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#0F0F23" />
+      <Animated.ScrollView
+        style={{ opacity: fadeAnim }}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.headerOrb} />
+          <Text style={styles.headerLabel}>Tu avance</Text>
+          <Text style={styles.headerTitle}>Progreso</Text>
+        </View>
+
+        {/* Motivational banner */}
+        <View style={styles.banner}>
+          <Text style={styles.bannerEmoji}>{emoji}</Text>
+          <View style={styles.bannerContent}>
+            <Text style={styles.bannerMsg}>{msg}</Text>
+            <Text style={styles.bannerSub}>
+              {completedCount} de {totalModules} módulos completados
+            </Text>
+          </View>
+        </View>
+
+        {/* Big percentage */}
+        <View style={styles.statsCard}>
+          <View style={styles.statsOrb} />
+          <Text style={styles.bigPercentage}>{completionPercentage}%</Text>
+          <Text style={styles.statsLabel}>Completado</Text>
+          <View style={{ marginTop: 16 }}>
+            <ProgressBar
+              percentage={completionPercentage}
+              color="#7C3AED"
+              height={14}
+            />
+          </View>
+          <View style={styles.statsBadges}>
+            <View style={styles.statsBadge}>
+              <Text style={styles.statsBadgeNum}>{completedCount}</Text>
+              <Text style={styles.statsBadgeLabel}>Completados</Text>
+            </View>
+            <View style={[styles.statsBadge, styles.statsBadgeDivider]}>
+              <Text style={styles.statsBadgeNum}>{totalModules - completedCount}</Text>
+              <Text style={styles.statsBadgeLabel}>Pendientes</Text>
+            </View>
+            <View style={styles.statsBadge}>
+              <Text style={styles.statsBadgeNum}>{totalModules}</Text>
+              <Text style={styles.statsBadgeLabel}>Total</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Modules list */}
+        <Text style={styles.sectionTitle}>Todos los módulos</Text>
+
+        {OOP_MODULES.map((mod, index) => {
+          const done = isComplete(mod.id);
+          return (
+            <TouchableOpacity
+              key={mod.id}
+              style={styles.moduleRow}
+              onPress={() => router.push(`/module/${mod.id}`)}
+              activeOpacity={0.7}
+            >
+              <View
+                style={[
+                  styles.moduleStatusDot,
+                  { backgroundColor: done ? '#10B981' : '#252545' },
+                ]}
+              >
+                <Text style={styles.moduleStatusIcon}>
+                  {done ? '✓' : (index + 1).toString()}
+                </Text>
+              </View>
+              <View style={styles.moduleRowContent}>
+                <Text style={styles.moduleRowIcon}>{mod.icon}</Text>
+                <View style={styles.moduleRowText}>
+                  <Text style={styles.moduleRowTitle}>{mod.title}</Text>
+                  <Text style={styles.moduleRowDuration}>⏱ {mod.durationMinutes} min</Text>
+                </View>
+              </View>
+              <View
+                style={[
+                  styles.statusPill,
+                  done ? styles.statusPillDone : styles.statusPillPending,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.statusPillText,
+                    done ? styles.statusTextDone : styles.statusTextPending,
+                  ]}
+                >
+                  {done ? 'Listo' : 'Pendiente'}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          );
         })}
-      </Collapsible>
-    </ParallaxScrollView>
+      </Animated.ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  headerImage: {
-    color: '#808080',
-    bottom: -90,
-    left: -35,
-    position: 'absolute',
+  container: {
+    flex: 1,
+    backgroundColor: '#0F0F23',
   },
-  titleContainer: {
+  content: {
+    paddingHorizontal: 16,
+    paddingBottom: 40,
+  },
+  header: {
+    paddingTop: 56,
+    paddingBottom: 8,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  headerOrb: {
+    position: 'absolute',
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    backgroundColor: '#0EA5E9',
+    opacity: 0.08,
+    top: -50,
+    right: -40,
+  },
+  headerLabel: {
+    fontSize: 13,
+    color: '#0EA5E9',
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  headerTitle: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#F0F0FF',
+    marginBottom: 20,
+  },
+  banner: {
     flexDirection: 'row',
-    gap: 8,
+    alignItems: 'center',
+    backgroundColor: '#1E1E3A',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#2A2A50',
+    gap: 14,
+  },
+  bannerEmoji: {
+    fontSize: 36,
+  },
+  bannerContent: {
+    flex: 1,
+  },
+  bannerMsg: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#F0F0FF',
+    marginBottom: 2,
+  },
+  bannerSub: {
+    fontSize: 13,
+    color: '#8888AA',
+  },
+  statsCard: {
+    backgroundColor: '#16162A',
+    borderRadius: 20,
+    padding: 24,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#252545',
+    overflow: 'hidden',
+    position: 'relative',
+    alignItems: 'center',
+  },
+  statsOrb: {
+    position: 'absolute',
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: '#7C3AED',
+    opacity: 0.06,
+    top: -80,
+    right: -60,
+  },
+  bigPercentage: {
+    fontSize: 72,
+    fontWeight: '900',
+    color: '#A78BFA',
+    lineHeight: 80,
+  },
+  statsLabel: {
+    fontSize: 14,
+    color: '#8888AA',
+    marginBottom: 8,
+  },
+  statsBadges: {
+    flexDirection: 'row',
+    marginTop: 20,
+    width: '100%',
+  },
+  statsBadge: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statsBadgeDivider: {
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderColor: '#252545',
+  },
+  statsBadgeNum: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#F0F0FF',
+  },
+  statsBadgeLabel: {
+    fontSize: 11,
+    color: '#6B7280',
+    marginTop: 2,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#F0F0FF',
+    marginBottom: 12,
+  },
+  moduleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#16162A',
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#252545',
+    gap: 12,
+  },
+  moduleStatusDot: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  moduleStatusIcon: {
+    fontSize: 12,
+    color: '#F0F0FF',
+    fontWeight: '700',
+  },
+  moduleRowContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  moduleRowIcon: {
+    fontSize: 20,
+  },
+  moduleRowText: {
+    flex: 1,
+  },
+  moduleRowTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#E0E0FF',
+    marginBottom: 2,
+  },
+  moduleRowDuration: {
+    fontSize: 11,
+    color: '#6B7280',
+  },
+  statusPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 99,
+  },
+  statusPillDone: {
+    backgroundColor: '#10B98122',
+    borderWidth: 1,
+    borderColor: '#10B98144',
+  },
+  statusPillPending: {
+    backgroundColor: '#1E1E3A',
+    borderWidth: 1,
+    borderColor: '#2A2A50',
+  },
+  statusPillText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  statusTextDone: {
+    color: '#10B981',
+  },
+  statusTextPending: {
+    color: '#6B7280',
   },
 });

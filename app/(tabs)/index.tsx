@@ -1,98 +1,243 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  Animated,
+  StatusBar,
+  Dimensions,
+} from 'react-native';
+import { useRouter } from 'expo-router';
+import { OOP_MODULES } from '@/constants/oopModules';
+import { useProgress } from '@/hooks/useProgress';
+import ModuleCard from '@/components/ModuleCard';
+import ProgressBar from '@/components/ProgressBar';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+const { width } = Dimensions.get('window');
+
+function Header({ completedCount, totalModules, completionPercentage }: {
+  completedCount: number;
+  totalModules: number;
+  completionPercentage: number;
+}) {
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(-20)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        tension: 60,
+        friction: 8,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
+
+  return (
+    <Animated.View
+      style={[
+        styles.header,
+        { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
+      ]}
+    >
+      {/* Decorative orb */}
+      <View style={styles.orb1} />
+      <View style={styles.orb2} />
+
+      <View style={styles.headerTop}>
+        <View>
+          <Text style={styles.greeting}>Bienvenido 👋</Text>
+          <Text style={styles.headerTitle}>Aprende POO</Text>
+          <Text style={styles.headerSubtitle}>con JavaScript</Text>
+        </View>
+        <View style={styles.progressCircle}>
+          <Text style={styles.progressPct}>{completionPercentage}%</Text>
+          <Text style={styles.progressLabel}>listo</Text>
+        </View>
+      </View>
+
+      <View style={styles.progressSection}>
+        <View style={styles.progressRow}>
+          <Text style={styles.progressText}>
+            {completedCount} de {totalModules} módulos completados
+          </Text>
+        </View>
+        <ProgressBar
+          percentage={completionPercentage}
+          color="#7C3AED"
+          height={10}
+        />
+      </View>
+
+      {/* Pillars chips */}
+      <View style={styles.pillarsRow}>
+        {['Clases', 'Herencia', 'Polimorfismo', 'Abstracción'].map((p) => (
+          <View key={p} style={styles.pillarChip}>
+            <Text style={styles.pillarText}>{p}</Text>
+          </View>
+        ))}
+      </View>
+    </Animated.View>
+  );
+}
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const router = useRouter();
+  const { isComplete, completedCount, totalModules, completionPercentage } =
+    useProgress();
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  return (
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#0F0F23" />
+      <FlatList
+        data={OOP_MODULES}
+        keyExtractor={(item) => item.id.toString()}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+        ListHeaderComponent={
+          <Header
+            completedCount={completedCount}
+            totalModules={totalModules}
+            completionPercentage={completionPercentage}
+          />
+        }
+        ListHeaderComponentStyle={styles.listHeader}
+        renderItem={({ item, index }) => (
+          <ModuleCard
+            module={item}
+            index={index}
+            isCompleted={isComplete(item.id)}
+            onPress={() => router.push(`/module/${item.id}`)}
+          />
+        )}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: {
+    flex: 1,
+    backgroundColor: '#0F0F23',
   },
-  stepContainer: {
-    gap: 8,
+  listContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 32,
+  },
+  listHeader: {
     marginBottom: 8,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
+  header: {
+    paddingTop: 56,
+    paddingBottom: 24,
+    overflow: 'hidden',
+  },
+  orb1: {
     position: 'absolute',
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: '#7C3AED',
+    opacity: 0.12,
+    top: -60,
+    right: -40,
+  },
+  orb2: {
+    position: 'absolute',
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#0EA5E9',
+    opacity: 0.1,
+    bottom: 0,
+    left: -20,
+  },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 20,
+  },
+  greeting: {
+    fontSize: 14,
+    color: '#7C3AED',
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  headerTitle: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#F0F0FF',
+    lineHeight: 36,
+  },
+  headerSubtitle: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#7C3AED',
+    lineHeight: 36,
+  },
+  progressCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#7C3AED22',
+    borderWidth: 2,
+    borderColor: '#7C3AED44',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
+  },
+  progressPct: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#A78BFA',
+  },
+  progressLabel: {
+    fontSize: 10,
+    color: '#8877AA',
+    fontWeight: '500',
+  },
+  progressSection: {
+    marginBottom: 16,
+  },
+  progressRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  progressText: {
+    fontSize: 13,
+    color: '#8888AA',
+  },
+  pillarsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  pillarChip: {
+    backgroundColor: '#1E1E3A',
+    borderRadius: 99,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderWidth: 1,
+    borderColor: '#352252',
+  },
+  pillarText: {
+    fontSize: 11,
+    color: '#A78BFA',
+    fontWeight: '600',
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#F0F0FF',
+    marginBottom: 12,
   },
 });
